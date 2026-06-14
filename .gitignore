@@ -1,0 +1,8 @@
+target/
+data/
+
+*.class
+
+*.db-journal
+*.db-shm
+*.db-wal
