@@ -4,7 +4,7 @@ public record NounDeclension(long id, long languageId, String title, int ordinal
 
     public NounDeclension {
         if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("Noun declension cannot be blank");
+            throw new IllegalArgumentException("Noun declension cannot be blank or null!");
         }
     }
 

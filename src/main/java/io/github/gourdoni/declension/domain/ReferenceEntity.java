@@ -1,6 +1,9 @@
 package io.github.gourdoni.declension.domain;
 
-// Any entity that the user defines (e.g. language, noun, noun case, etc.).
+/**
+ * Any language-scoped entity (i.e constitutent of a language itself) that the user defines:
+ * e.g. noun, noun case, noun gender, etc.
+ */
 public interface ReferenceEntity {
     long id();
     long languageId();

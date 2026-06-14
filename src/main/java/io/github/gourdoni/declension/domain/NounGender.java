@@ -4,7 +4,7 @@ public record NounGender(long id, long languageId, String title) implements Refe
 
     public NounGender {
         if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("Noun gender cannot be blank");
+            throw new IllegalArgumentException("Noun gender cannot be blank or null!");
         }
     }
 

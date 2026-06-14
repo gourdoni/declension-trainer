@@ -4,7 +4,7 @@ public record NounNo(long id, long languageId, String title, int ordinal) implem
 
     public NounNo {
         if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("Noun no. cannot be blank");
+            throw new IllegalArgumentException("Noun no. cannot be blank or null!");
         }
     }
 

@@ -4,7 +4,7 @@ public record NounCase(long id, long languageId, String title, int ordinal, bool
 
     public NounCase {
         if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("Noun case cannot be blank");
+            throw new IllegalArgumentException("Noun case cannot be blank or null!");
         }
     }
 
