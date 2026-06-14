@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS inflection (
 CREATE TABLE IF NOT EXISTS sentence (
     id INTEGER PRIMARY KEY,
     noun_id INTEGER NOT NULL REFERENCES noun(id) ON DELETE CASCADE,
-    sentence TEXT NOT NULL,
+    content TEXT NOT NULL,
     gloss TEXT,
     -- Indicate the inflection the noun appears in for this sentence.
     inflection_id INTEGER REFERENCES inflection(id) ON DELETE SET NULL
@@ -69,15 +69,12 @@ CREATE TABLE IF NOT EXISTS sentence (
 
 CREATE TABLE IF NOT EXISTS revision (
     id INTEGER PRIMARY KEY,
-    inflection_id INTEGER NOT NULL REFERENCES inflection(id) ON DELETE CASCADE,
+    inflection_id INTEGER NOT NULL UNIQUE REFERENCES inflection(id) ON DELETE CASCADE,
     interval_days INTEGER NOT NULL DEFAULT 0,
     ease_factor REAL NOT NULL DEFAULT 2.5, -- Default starting ease.
     repetitions INTEGER NOT NULL DEFAULT 0,
-    due_date TEXT, -- If null, should be treated as unseen.
-    last_seen TEXT
+    due_date TEXT -- If null, should be treated as unseen.
 );
 
-CREATE INDEX IF NOT EXISTS index_case_language ON noun_case(language_id);
-CREATE INDEX IF NOT EXISTS index_no_language ON noun_no(language_id);
 CREATE INDEX IF NOT EXISTS index_noun_language ON noun(language_id);
-CREATE INDEX IF NOT EXISTS index_inflection_noun ON inflection(noun_id);
+CREATE INDEX IF NOT EXISTS index_revision_due_date ON revision(due_date);
