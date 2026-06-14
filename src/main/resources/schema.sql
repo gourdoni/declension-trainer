@@ -1,7 +1,8 @@
 CREATE TABLE IF NOT EXISTS language (
     id INTEGER PRIMARY KEY,
     title TEXT NOT NULL UNIQUE,
-    -- Noun case and no. point back to language; insert language first, then cases/no.s, then update these.
+    -- Noun case and no. point back to language.
+    -- Insert language first, then cases/no.s, then update these.
     head_case_id INTEGER REFERENCES noun_case(id),
     head_no_id INTEGER REFERENCES noun_no(id)
 );
