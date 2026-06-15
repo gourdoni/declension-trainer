@@ -4,15 +4,21 @@ import com.sun.net.httpserver.HttpServer;
 
 import io.github.gourdoni.declension.domain.Language;
 import io.github.gourdoni.declension.domain.LanguageRepository;
+import io.github.gourdoni.declension.domain.Noun;
+import io.github.gourdoni.declension.domain.NounRepository;
+import io.github.gourdoni.declension.domain.Inflection;
+import io.github.gourdoni.declension.domain.InflectionRepository;
 import io.github.gourdoni.declension.domain.ReferenceEntity;
-import io.github.gourdoni.declension.domain.ReferenceRepository;
 import io.github.gourdoni.declension.domain.NounCase;
 import io.github.gourdoni.declension.domain.NounNo;
 import io.github.gourdoni.declension.domain.NounGender;
 import io.github.gourdoni.declension.domain.NounDeclension;
+import io.github.gourdoni.declension.domain.ReferenceRepository;
 
 import io.github.gourdoni.declension.persistence.Database;
 import io.github.gourdoni.declension.persistence.SchemaInitialiser;
+import io.github.gourdoni.declension.persistence.SQLiteNounRepository;
+import io.github.gourdoni.declension.persistence.SQLiteInflectionRepository;
 import io.github.gourdoni.declension.persistence.SQLiteLanguageRepository;
 import io.github.gourdoni.declension.persistence.SQLiteNounCaseRepository;
 import io.github.gourdoni.declension.persistence.SQLiteNounNoRepository;
@@ -34,15 +40,17 @@ public class App {
         Database database = new Database(databaseFile);
         SchemaInitialiser initialiser = new SchemaInitialiser(database);
         initialiser.createEntities();
+        System.out.println("Connected to database and created tables: " + databaseFile);
 
         LanguageRepository languageRepository = new SQLiteLanguageRepository(database);
         ReferenceRepository<NounCase> caseRepository = new SQLiteNounCaseRepository(database);
         ReferenceRepository<NounNo> noRepository = new SQLiteNounNoRepository(database);
         ReferenceRepository<NounGender> genderRepository = new SQLiteNounGenderRepository(database);
         ReferenceRepository<NounDeclension> declensionRepository = new SQLiteNounDeclensionRepository(database);
-        seedDevData(languageRepository, caseRepository, noRepository, genderRepository, declensionRepository);
+        NounRepository nounRepository = new SQLiteNounRepository(database);
+        InflectionRepository inflectionRepository = new SQLiteInflectionRepository(database);
+        seedDevData(languageRepository, caseRepository, noRepository, genderRepository, declensionRepository, nounRepository, inflectionRepository);
 
-        System.out.println("Connected to database and created tables: " + databaseFile);
         // Configure and execute HTTP server.
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
         server.createContext("/", exchange -> {
@@ -62,7 +70,9 @@ public class App {
                                     ReferenceRepository<NounCase> nounCases,
                                     ReferenceRepository<NounNo> nounNos,
                                     ReferenceRepository<NounGender> nounGenders,
-                                    ReferenceRepository<NounDeclension> nounDeclensions) {
+                                    ReferenceRepository<NounDeclension> nounDeclensions,
+                                    NounRepository nouns,
+                                    InflectionRepository inflections) {
         long latinID = languages.findAll().isEmpty()
                 ? languages.save(Language.of("Latin")).id()
                 : languages.findAll().get(0).id();
@@ -98,6 +108,22 @@ public class App {
             languages.save(latin.usingHeader(findIDByTitle(nounCases.findByLanguage(latinID), "Nominative"),
                                               findIDByTitle(nounNos.findByLanguage(latinID), "Singular")));
         }
+        if (nouns.findByLanguage(latinID).isEmpty()) {
+            long feminineID = findIDByTitle(nounGenders.findByLanguage(latinID), "Feminine");
+            long firstDeclensionID = findIDByTitle(nounDeclensions.findByLanguage(latinID), "First");
+            long puellaID = nouns.save(Noun.of(latinID, feminineID, firstDeclensionID, "girl")).id();
+            long singularID = findIDByTitle(nounNos.findByLanguage(latinID), "Singular");
+            List<NounCase> cases = nounCases.findByLanguage(latinID);
+            inflections.save(Inflection.of(puellaID, findIDByTitle(cases, "Nominative"), singularID, "puella"));
+            inflections.save(Inflection.of(puellaID, findIDByTitle(cases, "Genitive"),   singularID, "puellae"));
+            inflections.save(Inflection.of(puellaID, findIDByTitle(cases, "Dative"),     singularID, "puellae"));
+            inflections.save(Inflection.of(puellaID, findIDByTitle(cases, "Accusative"), singularID, "puellam"));
+            inflections.save(Inflection.of(puellaID, findIDByTitle(cases, "Ablative"),   singularID, "puellā"));
+            inflections.save(Inflection.of(puellaID, findIDByTitle(cases, "Vocative"),   singularID, "puella"));
+            // Note: no locative!
+        }
+        System.out.println("Latin nouns: " + nouns.findByLanguage(latinID));
+        nouns.findByLanguage(latinID).forEach(noun -> System.out.println("Inflections for noun " + noun.id() + ": " + inflections.findByNoun(noun.id())));
         System.out.println("Latin cases: " + nounCases.findByLanguage(latinID));
         System.out.println("Latin nos: " + nounNos.findByLanguage(latinID));
         System.out.println("Latin genders: " + nounGenders.findByLanguage(latinID));
