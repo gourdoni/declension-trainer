@@ -1,7 +1,5 @@
 package io.github.gourdoni.declension;
 
-import com.sun.net.httpserver.HttpServer;
-
 import io.github.gourdoni.declension.web.APIServer;
 
 import io.github.gourdoni.declension.domain.Language;
@@ -27,6 +25,7 @@ import io.github.gourdoni.declension.persistence.SQLiteRevisionRepository;
 
 import io.github.gourdoni.declension.service.NounService;
 import io.github.gourdoni.declension.service.RevisionService;
+import io.github.gourdoni.declension.service.LanguageService;
 
 import io.github.gourdoni.declension.scheduling.SchedulingStrategy;
 import io.github.gourdoni.declension.scheduling.SchedulingStrategyFactory;
@@ -43,9 +42,6 @@ import io.github.gourdoni.declension.persistence.SQLiteNounGenderRepository;
 import io.github.gourdoni.declension.persistence.SQLiteNounDeclensionRepository;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.List;
@@ -72,12 +68,13 @@ public class App {
         RevisionQueue revisionQueue = new SQLiteRevisionQueue(database);
         RevisionRepository revisionRepository = new SQLiteRevisionRepository(database);
 
+        LanguageService languageService = new LanguageService(languageRepository, caseRepository, nounNoRepository, genderRepository, declensionRepository);
         NounService nounService = new NounService(nounRepository, inflectionRepository);
         SchedulingStrategy schedulingStrategy = new SchedulingStrategyFactory().create(ActiveSchedulingStrategy.SM_2);
-        RevisionService revisionService = new RevisionService(revisionRepository, inflectionRepository, schedulingStrategy);
+        RevisionService revisionService = new RevisionService(revisionRepository, schedulingStrategy);
 
         // Create and execute HTTP server.
-        APIServer server = new APIServer(8080, languageRepository, nounListEntryQuery, nounService, revisionQueue, revisionService);
+        APIServer server = new APIServer(8080, languageService, nounListEntryQuery, nounService, revisionQueue, revisionService);
         server.start();
         System.out.println("Server running: http://localhost:8080");
     }

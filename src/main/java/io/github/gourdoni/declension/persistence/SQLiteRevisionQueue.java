@@ -24,7 +24,7 @@ public final class SQLiteRevisionQueue implements RevisionQueue {
     public List<DueInflection> dueForLanguage(long languageID, LocalDate onDate) {
         String sql = """
                      SELECT i.id AS inflection_id, i.noun_id AS noun_id, c.title AS case_title,
-                            num.title AS no_title, nn.gloss AS gloss
+                            num.title AS no_title, nn.gloss AS gloss, i.spelling AS spelling
                      FROM inflection i
                      JOIN noun nn ON nn.id = i.noun_id
                      JOIN noun_case c ON c.id = i.case_id
@@ -53,6 +53,7 @@ public final class SQLiteRevisionQueue implements RevisionQueue {
                                  queryResult.getLong("noun_id"),
                                  queryResult.getString("case_title"),
                                  queryResult.getString("no_title"),
-                                 queryResult.getString("gloss"));
+                                 queryResult.getString("gloss"),
+                                 queryResult.getString("spelling"));
     }
 }

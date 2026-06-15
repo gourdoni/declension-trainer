@@ -3,16 +3,18 @@ package io.github.gourdoni.declension.web;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import io.github.gourdoni.declension.domain.DataAccessException;
-import io.github.gourdoni.declension.domain.LanguageRepository;
 import io.github.gourdoni.declension.domain.NounSortOrder;
 import io.github.gourdoni.declension.domain.NounListEntryQuery;
 import io.github.gourdoni.declension.domain.RevisionQueue;
+import io.github.gourdoni.declension.service.LanguageDraft;
+import io.github.gourdoni.declension.service.LanguageService;
 import io.github.gourdoni.declension.service.NounDraft;
 import io.github.gourdoni.declension.service.NounService;
 import io.github.gourdoni.declension.service.RevisionResponse;
 import io.github.gourdoni.declension.service.RevisionService;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
@@ -26,16 +28,18 @@ public final class APIServer {
 
     private final HttpServer server;
 
-    public APIServer(int port,
-                     LanguageRepository languages,
-                     NounListEntryQuery nounListEntryQuery,
-                     NounService nounService,
-                     RevisionQueue revisionQueue,
-                     RevisionService revisionService) throws IOException {
+    public APIServer(int port, LanguageService languageService, NounListEntryQuery nounListEntryQuery,
+                     NounService nounService, RevisionQueue revisionQueue, RevisionService revisionService) throws IOException {
         this.server = HttpServer.create(new InetSocketAddress(port), 0);
-        server.createContext("/api/languages", exchange -> handle(exchange, () -> {
+
+        server.createContext("/api/languages", exchange -> handle(exchange, () -> switch (extractMethod(exchange)) {
+            case "GET" -> languageService.all();
+            case "POST" -> languageService.configure(readBody(exchange, LanguageDraft.class));
+            default -> throw new MethodNotAllowed("GET or POST required");
+        }));
+        server.createContext("/api/categories", exchange -> handle(exchange, () -> {
             requireMethod(exchange, "GET");
-            return languages.findAll();
+            return languageService.categories(getRequiredLong(exchange, "language"));
         }));
         server.createContext("/api/nouns", exchange -> handle(exchange, () -> switch (extractMethod(exchange)) {
             case "GET" -> nounListEntryQuery.forLanguage(getRequiredLong(exchange, "language"), sortFrom(exchange));
@@ -45,16 +49,39 @@ public final class APIServer {
         server.createContext("/api/review/submit", exchange -> handle(exchange, () -> {
             requireMethod(exchange, "POST");
             RevisionResponse response = readBody(exchange, RevisionResponse.class);
-            return revisionService.gradeResponses(response.responses(), LocalDate.now());
+            return revisionService.recordRevisions(response.responses(), LocalDate.now());
         }));
         server.createContext("/api/review", exchange -> handle(exchange, () -> {
             requireMethod(exchange, "GET");
             return revisionQueue.dueForLanguage(getRequiredLong(exchange, "language"), LocalDate.now());
         }));
+        server.createContext("/", this::serveStatic);
     }
 
     public void start() {
         server.start();
+    }
+
+    private void serveStatic(HttpExchange exchange) throws IOException {
+        try {
+            String path = exchange.getRequestURI().getPath();
+            if (path.equals("/") || path.isBlank()) {
+                path = "/index.html";
+            }
+            if (path.contains("..")) {
+                writeBytes(exchange, 404, "text/plain", "Not found".getBytes(StandardCharsets.UTF_8));
+                return;
+            }
+            try (InputStream resource = getClass().getResourceAsStream("/static" + path)) {
+                if (resource == null) {
+                    writeBytes(exchange, 404, "text/plain", "Not found".getBytes(StandardCharsets.UTF_8));
+                    return;
+                }
+                writeBytes(exchange, 200, contentType(path), resource.readAllBytes());
+            }
+        } finally {
+            exchange.close();
+        }
     }
 
     private void handle(HttpExchange exchange, APIAction action) throws IOException {
@@ -72,8 +99,12 @@ public final class APIServer {
     }
 
     private void outputJson(HttpExchange exchange, int status, Object body) throws IOException {
-        byte[] bytes = JsonHandler.instance().toJson(body).getBytes(StandardCharsets.UTF_8);
-        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
+        writeBytes(exchange, status, "application/json; charset=utf-8",
+                JsonHandler.instance().toJson(body).getBytes(StandardCharsets.UTF_8));
+    }
+
+    private void writeBytes(HttpExchange exchange, int status, String contentType, byte[] bytes) throws IOException {
+        exchange.getResponseHeaders().set("Content-Type", contentType);
         exchange.sendResponseHeaders(status, bytes.length);
         try (OutputStream stream = exchange.getResponseBody()) {
             stream.write(bytes);
@@ -88,6 +119,13 @@ public final class APIServer {
             }
             return body;
         }
+    }
+
+    private String contentType(String path) {
+        if (path.endsWith(".html")) return "text/html; charset=utf-8";
+        if (path.endsWith(".js")) return "text/javascript; charset=utf-8";
+        if (path.endsWith(".css")) return "text/css; charset=utf-8";
+        return "application/octet-stream";
     }
 
     private String extractMethod(HttpExchange exchange) {
@@ -119,7 +157,7 @@ public final class APIServer {
         }
         try {
             return Long.parseLong(value);
-        } catch (NumberFormatException exception) {
+        } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Parameter " + para + " must be a number");
         }
     }
@@ -130,10 +168,10 @@ public final class APIServer {
             return null;
         }
         for (String pair : query.split("&")) {
-            int equalsIndex = pair.indexOf('=');
-            String key = equalsIndex < 0 ? pair : pair.substring(0, equalsIndex);
+            int i = pair.indexOf('=');
+            String key = i < 0 ? pair : pair.substring(0, i);
             if (key.equals(para)) {
-                return equalsIndex < 0 ? "" : URLDecoder.decode(pair.substring(equalsIndex + 1), StandardCharsets.UTF_8);
+                return i < 0 ? "" : URLDecoder.decode(pair.substring(i + 1), StandardCharsets.UTF_8);
             }
         }
         return null;
@@ -145,8 +183,8 @@ public final class APIServer {
     }
 
     private static final class MethodNotAllowed extends RuntimeException {
-        MethodNotAllowed(String message) {
-            super(message);
+        MethodNotAllowed(String content) {
+            super(content);
         }
     }
 
