@@ -5,6 +5,6 @@ import java.util.Optional;
 
 public interface LanguageRepository {
     Language save(Language language);
-    Optional<Language> findById(long id);
+    Optional<Language> findByID(long id);
     List<Language> findAll();
 }
