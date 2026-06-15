@@ -25,7 +25,7 @@ public final class SQLiteNounCaseRepository extends SQLiteReferenceRepository<No
 
     @Override
     protected void substituteEditableAttributes(PreparedStatement statement, NounCase nounCase) throws SQLException {
-        statement.setLong(1, nounCase.languageId());
+        statement.setLong(1, nounCase.languageID());
         statement.setString(2, nounCase.title());
         statement.setInt(3, nounCase.ordinal());
         statement.setInt(4, nounCase.isOptional() ? 1 : 0);
@@ -43,7 +43,7 @@ public final class SQLiteNounCaseRepository extends SQLiteReferenceRepository<No
     @Override
     protected NounCase usingGeneratedID(NounCase nounCase, long generatedID) {
         return new NounCase(generatedID,
-                            nounCase.languageId(),
+                            nounCase.languageID(),
                             nounCase.title(),
                             nounCase.ordinal(),
                             nounCase.isOptional());

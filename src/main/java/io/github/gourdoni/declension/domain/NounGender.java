@@ -1,6 +1,6 @@
 package io.github.gourdoni.declension.domain;
 
-public record NounGender(long id, long languageId, String title) implements ReferenceEntity {
+public record NounGender(long id, long languageID, String title) implements ReferenceEntity {
 
     public NounGender {
         if (title == null || title.isBlank()) {
@@ -8,7 +8,7 @@ public record NounGender(long id, long languageId, String title) implements Refe
         }
     }
 
-    public static NounGender of(long languageId, String title) {
-        return new NounGender(0, languageId, title);
+    public static NounGender of(long languageID, String title) {
+        return new NounGender(0, languageID, title);
     }
 }

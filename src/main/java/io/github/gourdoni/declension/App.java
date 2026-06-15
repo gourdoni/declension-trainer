@@ -24,7 +24,6 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 

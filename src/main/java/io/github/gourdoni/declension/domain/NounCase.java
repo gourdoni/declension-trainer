@@ -1,6 +1,6 @@
 package io.github.gourdoni.declension.domain;
 
-public record NounCase(long id, long languageId, String title, int ordinal, boolean isOptional) implements ReferenceEntity {
+public record NounCase(long id, long languageID, String title, int ordinal, boolean isOptional) implements ReferenceEntity {
 
     public NounCase {
         if (title == null || title.isBlank()) {
@@ -8,7 +8,7 @@ public record NounCase(long id, long languageId, String title, int ordinal, bool
         }
     }
 
-    public static NounCase of(long languageId, String title, int ordinal, boolean isOptional) {
-        return new NounCase(0, languageId, title, ordinal, isOptional);
+    public static NounCase of(long languageID, String title, int ordinal, boolean isOptional) {
+        return new NounCase(0, languageID, title, ordinal, isOptional);
     }
 }

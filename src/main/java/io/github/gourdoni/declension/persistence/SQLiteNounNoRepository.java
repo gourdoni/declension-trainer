@@ -25,7 +25,7 @@ public final class SQLiteNounNoRepository extends SQLiteReferenceRepository<Noun
 
     @Override
     protected void substituteEditableAttributes(PreparedStatement statement, NounNo nounNo) throws SQLException {
-        statement.setLong(1, nounNo.languageId());
+        statement.setLong(1, nounNo.languageID());
         statement.setString(2, nounNo.title());
         statement.setInt(3, nounNo.ordinal());
     }
@@ -40,7 +40,7 @@ public final class SQLiteNounNoRepository extends SQLiteReferenceRepository<Noun
 
     @Override
     protected NounNo usingGeneratedID(NounNo nounNo, long generatedID) {
-        return new NounNo(generatedID, nounNo.languageId(), nounNo.title(), nounNo.ordinal());
+        return new NounNo(generatedID, nounNo.languageID(), nounNo.title(), nounNo.ordinal());
     }
 
     @Override

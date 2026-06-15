@@ -1,6 +1,6 @@
 package io.github.gourdoni.declension.domain;
 
-public record NounNo(long id, long languageId, String title, int ordinal) implements ReferenceEntity {
+public record NounNo(long id, long languageID, String title, int ordinal) implements ReferenceEntity {
 
     public NounNo {
         if (title == null || title.isBlank()) {
@@ -8,7 +8,7 @@ public record NounNo(long id, long languageId, String title, int ordinal) implem
         }
     }
 
-    public static NounNo of(long languageId, String title, int ordinal) {
-        return new NounNo(0, languageId, title, ordinal);
+    public static NounNo of(long languageID, String title, int ordinal) {
+        return new NounNo(0, languageID, title, ordinal);
     }
 }

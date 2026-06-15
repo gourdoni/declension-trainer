@@ -25,7 +25,7 @@ public final class SQLiteNounGenderRepository extends SQLiteReferenceRepository<
 
     @Override
     protected void substituteEditableAttributes(PreparedStatement statement, NounGender nounGender) throws SQLException {
-        statement.setLong(1, nounGender.languageId());
+        statement.setLong(1, nounGender.languageID());
         statement.setString(2, nounGender.title());
     }
 
@@ -38,6 +38,6 @@ public final class SQLiteNounGenderRepository extends SQLiteReferenceRepository<
 
     @Override
     protected NounGender usingGeneratedID(NounGender nounGender, long generatedID) {
-        return new NounGender(generatedID, nounGender.languageId(), nounGender.title());
+        return new NounGender(generatedID, nounGender.languageID(), nounGender.title());
     }
 }

@@ -25,7 +25,7 @@ public final class SQLiteNounDeclensionRepository extends SQLiteReferenceReposit
 
     @Override
     protected void substituteEditableAttributes(PreparedStatement statement, NounDeclension nounDeclension) throws SQLException {
-        statement.setLong(1, nounDeclension.languageId());
+        statement.setLong(1, nounDeclension.languageID());
         statement.setString(2, nounDeclension.title());
         statement.setInt(3, nounDeclension.ordinal());
     }
@@ -40,7 +40,7 @@ public final class SQLiteNounDeclensionRepository extends SQLiteReferenceReposit
 
     @Override
     protected NounDeclension usingGeneratedID(NounDeclension nounDeclension, long generatedID) {
-        return new NounDeclension(generatedID, nounDeclension.languageId(), nounDeclension.title(), nounDeclension.ordinal());
+        return new NounDeclension(generatedID, nounDeclension.languageID(), nounDeclension.title(), nounDeclension.ordinal());
     }
 
     @Override
