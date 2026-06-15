@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS revision (
     interval_days INTEGER NOT NULL DEFAULT 0,
     ease_factor REAL NOT NULL DEFAULT 2.5, -- Default starting ease.
     repetitions INTEGER NOT NULL DEFAULT 0,
-    due_date TEXT -- If null, should be treated as unseen.
+    due_date TEXT -- Set upon first revision. Inflections that have no revision records are unseen.
 );
 
 CREATE INDEX IF NOT EXISTS index_noun_language ON noun(language_id);
