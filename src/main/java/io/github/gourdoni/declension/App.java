@@ -2,6 +2,8 @@ package io.github.gourdoni.declension;
 
 import com.sun.net.httpserver.HttpServer;
 
+import io.github.gourdoni.declension.web.APIServer;
+
 import io.github.gourdoni.declension.domain.Language;
 import io.github.gourdoni.declension.domain.LanguageRepository;
 import io.github.gourdoni.declension.domain.Noun;
@@ -14,6 +16,21 @@ import io.github.gourdoni.declension.domain.NounNo;
 import io.github.gourdoni.declension.domain.NounGender;
 import io.github.gourdoni.declension.domain.NounDeclension;
 import io.github.gourdoni.declension.domain.ReferenceRepository;
+
+import io.github.gourdoni.declension.domain.NounListEntryQuery;
+import io.github.gourdoni.declension.domain.RevisionQueue;
+import io.github.gourdoni.declension.domain.RevisionRepository;
+
+import io.github.gourdoni.declension.persistence.SQLiteNounListEntryQuery;
+import io.github.gourdoni.declension.persistence.SQLiteRevisionQueue;
+import io.github.gourdoni.declension.persistence.SQLiteRevisionRepository;
+
+import io.github.gourdoni.declension.service.NounService;
+import io.github.gourdoni.declension.service.RevisionService;
+
+import io.github.gourdoni.declension.scheduling.SchedulingStrategy;
+import io.github.gourdoni.declension.scheduling.SchedulingStrategyFactory;
+import io.github.gourdoni.declension.scheduling.ActiveSchedulingStrategy;
 
 import io.github.gourdoni.declension.persistence.Database;
 import io.github.gourdoni.declension.persistence.SchemaInitialiser;
@@ -44,23 +61,23 @@ public class App {
 
         LanguageRepository languageRepository = new SQLiteLanguageRepository(database);
         ReferenceRepository<NounCase> caseRepository = new SQLiteNounCaseRepository(database);
-        ReferenceRepository<NounNo> noRepository = new SQLiteNounNoRepository(database);
+        ReferenceRepository<NounNo> nounNoRepository = new SQLiteNounNoRepository(database);
         ReferenceRepository<NounGender> genderRepository = new SQLiteNounGenderRepository(database);
         ReferenceRepository<NounDeclension> declensionRepository = new SQLiteNounDeclensionRepository(database);
         NounRepository nounRepository = new SQLiteNounRepository(database);
         InflectionRepository inflectionRepository = new SQLiteInflectionRepository(database);
-        seedDevData(languageRepository, caseRepository, noRepository, genderRepository, declensionRepository, nounRepository, inflectionRepository);
+        seedDevData(languageRepository, caseRepository, nounNoRepository, genderRepository, declensionRepository, nounRepository, inflectionRepository);
 
-        // Configure and execute HTTP server.
-        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
-        server.createContext("/", exchange -> {
-            byte[] body = "Salvete! Valete!".getBytes(StandardCharsets.UTF_8);
-            exchange.getResponseHeaders().set("Content-Type", "text/plain; charset=utf-8");
-            exchange.sendResponseHeaders(200, body.length);
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(body);
-            }
-        });
+        NounListEntryQuery nounListEntryQuery = new SQLiteNounListEntryQuery(database);
+        RevisionQueue revisionQueue = new SQLiteRevisionQueue(database);
+        RevisionRepository revisionRepository = new SQLiteRevisionRepository(database);
+
+        NounService nounService = new NounService(nounRepository, inflectionRepository);
+        SchedulingStrategy schedulingStrategy = new SchedulingStrategyFactory().create(ActiveSchedulingStrategy.SM_2);
+        RevisionService revisionService = new RevisionService(revisionRepository, inflectionRepository, schedulingStrategy);
+
+        // Create and execute HTTP server.
+        APIServer server = new APIServer(8080, languageRepository, nounListEntryQuery, nounService, revisionQueue, revisionService);
         server.start();
         System.out.println("Server running: http://localhost:8080");
     }

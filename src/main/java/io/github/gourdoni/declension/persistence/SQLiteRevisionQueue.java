@@ -23,28 +23,15 @@ public final class SQLiteRevisionQueue implements RevisionQueue {
     @Override
     public List<DueInflection> dueForLanguage(long languageID, LocalDate onDate) {
         String sql = """
-                     SELECT
-                         inflection.id AS inflection_id,
-                         noun_case.title AS case_title,
-                         noun_number.title AS number_title,
-                         noun.gloss AS gloss,
-                         inflection.spelling AS spelling
-                     FROM inflection
-                     JOIN noun
-                         ON noun.id = inflection.noun_id
-                     JOIN noun_case
-                         ON noun_case.id = inflection.case_id
-                     JOIN noun_no AS noun_number
-                         ON noun_number.id = inflection.no_id
-                     LEFT JOIN revision
-                         ON revision.inflection_id = inflection.id
-                     WHERE noun.language_id = ?
-                       AND (revision.id IS NULL OR revision.due_date <= ?)
-                     ORDER BY
-                         (revision.due_date IS NULL) DESC,
-                         revision.due_date ASC,
-                         noun_case.ordinal,
-                         noun_number.ordinal
+                     SELECT i.id AS inflection_id, i.noun_id AS noun_id, c.title AS case_title,
+                            num.title AS no_title, nn.gloss AS gloss
+                     FROM inflection i
+                     JOIN noun nn ON nn.id = i.noun_id
+                     JOIN noun_case c ON c.id = i.case_id
+                     JOIN noun_no num ON num.id = i.no_id
+                     LEFT JOIN revision r ON r.inflection_id = i.id
+                     WHERE nn.language_id = ? AND (r.id IS NULL OR r.due_date <= ?)
+                     ORDER BY (r.due_date IS NULL) DESC, r.due_date ASC, c.ordinal, num.ordinal
                      """;
         try (Connection connection = database.openConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, languageID);
@@ -63,9 +50,9 @@ public final class SQLiteRevisionQueue implements RevisionQueue {
 
     private DueInflection readRecord(ResultSet queryResult) throws SQLException {
         return new DueInflection(queryResult.getLong("inflection_id"),
+                                 queryResult.getLong("noun_id"),
                                  queryResult.getString("case_title"),
                                  queryResult.getString("no_title"),
-                                 queryResult.getString("gloss"),
-                                 queryResult.getString("spelling"));
+                                 queryResult.getString("gloss"));
     }
 }
