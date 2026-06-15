@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Declension Trainer</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js"></script>
+  <script defer src="/alpine.min.js"></script>
+</head>
+<body x-data="app()" x-cloak>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">Declension Trainer</div>
+      <nav class="lang-list">
+        <template x-for="lang in languages" :key="lang.id">
+          <button class="lang" :class="{active: lang.id === selectedLanguageID}" @click="selectLanguage(lang.id)" x-text="lang.title"></button>
+        </template>
+        <p class="empty" x-show="languages.length === 0">No languages yet.</p>
+      </nav>
+      <button class="btn-add-lang" @click="openAddLanguage()">+ Add language</button>
+    </aside>
+
+    <main class="main">
+      <div class="error" x-show="error" x-text="error" @click="error=''"></div>
+
+      <template x-if="view === 'nouns' && selectedLanguage">
+        <section>
+          <header class="main-head">
+            <h1 class="lang-title" x-text="selectedLanguage.title"></h1>
+            <div class="toolbar">
+              <div class="sort">
+                <button :class="{on: sort === 'due'}" @click="setSort('due')">By due</button>
+                <button :class="{on: sort === 'alphabetical'}" @click="setSort('alphabetical')">A–Z</button>
+              </div>
+              <button class="btn" @click="openAddNoun()">Add noun</button>
+              <button class="btn primary" @click="startReview()">Start review</button>
+            </div>
+          </header>
+          <table class="nouns" x-show="nouns.length">
+            <thead><tr><th>Headword</th><th>Gloss</th><th>Gender</th><th>Declension</th><th>Next review</th></tr></thead>
+            <tbody>
+              <template x-for="n in nouns" :key="n.nounID">
+                <tr>
+                  <td class="lat" x-text="n.headword || '—'"></td>
+                  <td x-text="n.gloss || ''"></td>
+                  <td x-text="n.genderTitle"></td>
+                  <td x-text="n.declensionTitle"></td>
+                  <td x-text="dueLabel(n)"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+          <p class="empty" x-show="nouns.length === 0">No nouns yet. Add one to begin!</p>
+        </section>
+      </template>
+
+      <template x-if="view === 'addLanguage'">
+        <section class="panel">
+          <h1>Add a language</h1>
+          <label>Name<input type="text" x-model="langForm.title" placeholder="e.g. Latin"></label>
+
+          <div class="cat-grid">
+            <div class="cat-block">
+              <div class="cat-head">
+                <h2 class="cat-title">Cases</h2>
+                <label class="count-label">How many?
+                  <input type="number" min="0" max="30" x-model.number="langCounts.cases" @input="setCount('cases', $event.target.value)">
+                </label>
+              </div>
+              <table class="cat-table" x-show="langForm.cases.length">
+                <thead><tr><th class="num">#</th><th>Case</th><th class="opt">Optional</th></tr></thead>
+                <tbody>
+                  <template x-for="(row, i) in langForm.cases" :key="i">
+                    <tr>
+                      <td class="num" x-text="i + 1"></td>
+                      <td><input type="text" x-model="row.title" :placeholder="'Case ' + (i + 1)"></td>
+                      <td class="opt"><input type="checkbox" x-model="row.optional"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+
+            <template x-for="cat in [
+                  {kind:'numbers', label:'Numbers', singular:'Number'},
+                  {kind:'genders', label:'Genders', singular:'Gender'},
+                  {kind:'declensions', label:'Declensions', singular:'Declension'}
+                ]" :key="cat.kind">
+              <div class="cat-block">
+                <div class="cat-head">
+                  <h2 class="cat-title" x-text="cat.label"></h2>
+                  <label class="count-label">How many?
+                    <input type="number" min="0" max="30" x-model.number="langCounts[cat.kind]" @input="setCount(cat.kind, $event.target.value)">
+                  </label>
+                </div>
+                <table class="cat-table" x-show="langForm[cat.kind].length">
+                  <thead><tr><th class="num">#</th><th x-text="cat.singular"></th></tr></thead>
+                  <tbody>
+                    <template x-for="(row, i) in langForm[cat.kind]" :key="i">
+                      <tr>
+                        <td class="num" x-text="i + 1"></td>
+                        <td><input type="text" x-model="row.title" :placeholder="cat.singular + ' ' + (i + 1)"></td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </template>
+          </div>
+
+          <p class="hint">The first case and number become the headword cell — the citation form shown in the noun list.</p>
+          <div class="actions">
+            <button class="btn" @click="view='nouns'">Cancel</button>
+            <button class="btn primary" @click="submitLanguage()">Create language</button>
+          </div>
+        </section>
+      </template>
+
+      <template x-if="view === 'addNoun' && categories">
+        <section class="panel">
+          <h1>Add a noun</h1>
+          <div class="grid2">
+            <label>Gloss (meaning)<input type="text" x-model="nounForm.gloss" placeholder="e.g. girl"></label>
+            <label>Gender
+              <select x-model="nounForm.genderID">
+                <option value="">Select…</option>
+                <template x-for="g in categories.genders" :key="g.id"><option :value="g.id" x-text="g.title"></option></template>
+              </select>
+            </label>
+            <label>Declension
+              <select x-model="nounForm.declensionID">
+                <option value="">Select…</option>
+                <template x-for="d in categories.declensions" :key="d.id"><option :value="d.id" x-text="d.title"></option></template>
+              </select>
+            </label>
+          </div>
+          <table class="forms-grid">
+            <thead><tr><th></th><template x-for="num in categories.numbers" :key="num.id"><th x-text="num.title"></th></template></tr></thead>
+            <tbody>
+              <template x-for="c in categories.cases" :key="c.id">
+                <tr>
+                  <th x-text="c.title + (c.isOptional ? ' (opt.)' : '')"></th>
+                  <template x-for="num in categories.numbers" :key="num.id">
+                    <td><input class="lat" type="text" x-model="nounForm.spellings[c.id + ':' + num.id]"></td>
+                  </template>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+          <p class="hint">Leave a cell blank to skip it (e.g. an optional case you don't use).</p>
+          <div class="actions">
+            <button class="btn" @click="view='nouns'">Cancel</button>
+            <button class="btn primary" @click="submitNoun()">Save noun</button>
+          </div>
+        </section>
+      </template>
+
+      <template x-if="view === 'review'">
+        <section class="review-wrap">
+          <div class="review-top">
+            <span x-show="!review.done" x-text="`Card ${review.index + 1} of ${review.queue.length}`"></span>
+            <span x-show="review.done"></span>
+            <button class="btn" @click="exitReview()">Exit review</button>
+          </div>
+          <template x-if="!review.done && currentCard">
+            <div class="card">
+              <p class="prompt"><span x-text="currentCard.nounCaseTitle"></span> · <span x-text="currentCard.nounNoTitle"></span></p>
+              <p class="gloss" x-text="currentCard.gloss ? '“' + currentCard.gloss + '”' : ''"></p>
+              <input class="lat answer" type="text" x-model="review.typed" :disabled="review.revealed"
+                     @keydown.enter="!review.revealed && reveal()" placeholder="type the inflection...">
+              <template x-if="!review.revealed">
+                <button class="btn primary wide" @click="reveal()">Reveal</button>
+              </template>
+              <template x-if="review.revealed">
+                <div class="reveal">
+                  <p class="answer-line">
+                    <span class="lat big" x-text="currentCard.spelling"></span>
+                    <span class="mark" x-show="review.typed.trim()"
+                          :class="review.typed.trim() === currentCard.spelling ? 'ok' : 'no'"
+                          x-text="review.typed.trim() === currentCard.spelling ? '✓' : '✗'"></span>
+                  </p>
+                  <p class="rate-label">How well did you recall it?</p>
+                  <div class="grades">
+                    <button class="grade again" @click="grade('AGAIN')">Again</button>
+                    <button class="grade hard" @click="grade('HARD')">Hard</button>
+                    <button class="grade good" @click="grade('GOOD')">Good</button>
+                    <button class="grade easy" @click="grade('EASY')">Easy</button>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+          <template x-if="review.done">
+            <div class="card done">
+              <p class="big">All caught up.</p>
+              <p class="muted" x-text="review.queue.length ? 'Nice work.' : 'Nothing is due right now.'"></p>
+              <button class="btn primary" @click="exitReview()">Back to nouns</button>
+            </div>
+          </template>
+        </section>
+      </template>
+    </main>
+  </div>
+</body>
+</html>

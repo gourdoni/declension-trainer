@@ -52,15 +52,19 @@ public final class LanguageService {
 
         long headCaseID = 0;
         int ordinal = 1;
-        for (String title : draft.cases()) {
-            long id = cases.save(NounCase.of(languageID, title, ordinal++, false)).id();
-            if (headCaseID == 0) headCaseID = id;
+        for (LanguageDraft.CaseDraft nounCase : draft.cases()) {
+            long id = cases.save(NounCase.of(languageID, nounCase.title(), ordinal++, nounCase.optional())).id();
+            if (headCaseID == 0) {
+                headCaseID = id;
+            }
         }
         long headNoID = 0;
         ordinal = 1;
         for (String title : draft.numbers()) {
             long id = numbers.save(NounNo.of(languageID, title, ordinal++)).id();
-            if (headNoID == 0) headNoID = id;
+            if (headNoID == 0) {
+                headNoID = id;
+            }
         }
         for (String title : draft.genders()) {
             genders.save(NounGender.of(languageID, title));
@@ -72,7 +76,7 @@ public final class LanguageService {
         return languages.save(language.usingHeader(headCaseID, headNoID));
     }
 
-    private static void requireNonEmpty(List<String> values, String kind) {
+    private static void requireNonEmpty(List<?> values, String kind) {
         if (values == null || values.isEmpty()) {
             throw new IllegalArgumentException("A language needs at least one " + kind + ".");
         }

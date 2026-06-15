@@ -122,9 +122,15 @@ public final class APIServer {
     }
 
     private String contentType(String path) {
-        if (path.endsWith(".html")) return "text/html; charset=utf-8";
-        if (path.endsWith(".js")) return "text/javascript; charset=utf-8";
-        if (path.endsWith(".css")) return "text/css; charset=utf-8";
+        if (path.endsWith(".html")) {
+            return "text/html; charset=utf-8";
+        } else if (path.endsWith(".js")) {
+            return "text/javascript; charset=utf-8";
+        } else if (path.endsWith(".css")) {
+            return "text/css; charset=utf-8";
+        } else if (path.endsWith(".woff2")) {
+            return "font/woff2";
+        }
         return "application/octet-stream";
     }
 
