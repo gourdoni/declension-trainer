@@ -67,9 +67,15 @@ function app() {
         },
 
         dueLabel(n) {
-            if (n.unseenCount > 0) return 'New';
-            if (!n.nextDue) return '—';
-            return n.nextDue <= new Date().toISOString().slice(0, 10) ? 'Due now' : n.nextDue;
+            const parts = [];
+            if (n.unseenCount > 0) {
+                parts.push(`${n.unseenCount} new`);
+            }
+            if (n.nextDue) {
+                const today = new Date().toISOString().slice(0, 10);
+                parts.push(n.nextDue <= today ? 'due now' : `next ${n.nextDue}`);
+            }
+            return parts.length ? parts.join(' · ') : '—';
         },
 
         openAddLanguage() {
