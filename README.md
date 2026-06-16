@@ -63,6 +63,16 @@ For example, _rex_ in Latin is a masculine, 3rd declension noun, which is inflec
 
 ## Design
 
+The code is organised in layers:
+
+- **domain** defines entities and repository/query interfaces
+- **persistence** contains JDBC/SQLite implementations of those interfaces
+- **scheduling** contains interchangeable spaced-repetition strategies
+- **service** defines services that manipulate the domain
+- **web** is an HTTP/JSON API that serves the static front end
+
+The full relational database design is as follows:
+
 ```mermaid
 erDiagram
     language {
