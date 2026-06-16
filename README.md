@@ -2,8 +2,8 @@
 
 A spaced-repetition application specialised for studying and learning noun inflections in highly-inflected Indo-European languages (e.g. Classical Latin).
 
-- [Background](#background)
 - [Usage](#usage)
+- [Background](#background)
 - [Design](#design)
 
 ## Usage
@@ -32,6 +32,7 @@ java -jar target/declension-trainer.jar
 In an **inflected** language, the shape of nouns changes depending on the role it plays in a sentence.
 There are vestiges of this in English, e.g. _horse_ is singular, but _horses_ is plural.
 The _-s_ suffix indicates that the noun is plural.
+These changes are called **inflections**.
 
 There are certain key categories in highly-inflected (Indo-European) languages that underpin this process:
 
@@ -48,18 +49,87 @@ The common cases are:
 - **Ablative**: means, manner, or separation; "by", "with", "from"
 - **Vocative**: direct address
 
-A noun's gender and its **declension** dictate the suffixes it takes for each combination of case and number.
-For example, _rex_ is a masculine, 3rd declension noun, which is inflected as follows:
+A noun's gender and its **declension** (another category) dictate the suffixes it takes for each combination of case and number.
+For example, _rex_ in Latin is a masculine, 3rd declension noun, which is inflected as follows:
 
-| Case       | Singular | Plural  |
-|------------|----------|---------|
-| Nominative | rēx      | rēgēs   |
-| Genitive   | rēgis    | rēgum   |
-| Dative     | rēgī     | rēgibus |
-| Accusative | rēgem    | rēgēs   |
-| Ablative   | rēge     | rēgibus |
-| Vocative   | rēx      | rēgēs   |
+| Case         | Singular | Plural  |
+|--------------|----------|---------|
+| _Nominative_ | rēx      | rēgēs   |
+| _Genitive_   | rēgis    | rēgum   |
+| _Dative_     | rēgī     | rēgibus |
+| _Accusative_ | rēgem    | rēgēs   |
+| _Ablative_   | rēge     | rēgibus |
+| _Vocative_   | rēx      | rēgēs   |
 
 ## Design
 
-Todo!
+```mermaid
+classDiagram
+    class language {
+        INTEGER id
+        TEXT title
+        INTEGER head_case_id
+        INTEGER head_no_id
+    }
+    class noun_case {
+        INTEGER id
+        INTEGER language_id
+        TEXT title
+        INTEGER ordinal
+        INTEGER is_optional
+    }
+    class noun_no {
+        INTEGER id
+        INTEGER language_id
+        TEXT title
+        INTEGER ordinal
+    }
+    class noun_gender {
+        INTEGER id
+        INTEGER language_id
+        TEXT title
+    }
+    class noun_declension {
+        INTEGER id
+        INTEGER language_id
+        TEXT title
+        INTEGER ordinal
+    }
+    class noun {
+        INTEGER id
+        INTEGER language_id
+        TEXT gloss
+        INTEGER gender_id
+        INTEGER declension_id
+    }
+    class inflection {
+        INTEGER id
+        INTEGER noun_id
+        INTEGER case_id
+        INTEGER no_id
+        TEXT spelling
+    }
+    class revision {
+        INTEGER id
+        INTEGER inflection_id
+        INTEGER interval_days
+        REAL ease_factor
+        INTEGER repetitions
+        TEXT due_date
+    }
+
+    language "1" *-- "0..N" noun_case : defines
+    language "1" *-- "0..N" noun_no : defines
+    language "1" *-- "0..N" noun_gender : defines
+    language "1" *-- "0..N" noun_declension : defines
+    language "1" *-- "0..N" noun : contains
+    noun "1" *-- "0..N" inflection : has
+    inflection "1" *-- "0..1" revision : scheduled by
+    noun "0..N" --> "1" noun_gender : gender
+    noun "0..N" --> "1" noun_declension : declension
+    inflection "0..N" --> "1" noun_case : case
+    inflection "0..N" --> "1" noun_no : number
+    language "0..1" --> "0..1" noun_case : headword case
+    language "0..1" --> "0..1" noun_no : headword number
+```
+
