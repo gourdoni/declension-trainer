@@ -63,7 +63,7 @@ For example, _rex_ in Latin is a masculine, 3rd declension noun, which is inflec
 
 ## Design
 
-The code is organised in layers:
+The source code is organised in layers:
 
 - **domain** defines entities and repository/query interfaces
 - **persistence** contains JDBC/SQLite implementations of those interfaces
