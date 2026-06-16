@@ -31,7 +31,6 @@ public final class APIServer {
     public APIServer(int port, LanguageService languageService, NounListEntryQuery nounListEntryQuery,
                      NounService nounService, RevisionQueue revisionQueue, RevisionService revisionService) throws IOException {
         this.server = HttpServer.create(new InetSocketAddress(port), 0);
-
         server.createContext("/api/languages", exchange -> handle(exchange, () -> switch (extractMethod(exchange)) {
             case "GET" -> languageService.all();
             case "POST" -> languageService.configure(readBody(exchange, LanguageDraft.class));
@@ -151,7 +150,7 @@ public final class APIServer {
         }
         try {
             return NounSortOrder.valueOf(sort.toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException("Invalid sort order: " + sort);
         }
     }
@@ -163,7 +162,7 @@ public final class APIServer {
         }
         try {
             return Long.parseLong(value);
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException exception) {
             throw new IllegalArgumentException("Parameter " + para + " must be a number");
         }
     }
