@@ -64,72 +64,71 @@ For example, _rex_ in Latin is a masculine, 3rd declension noun, which is inflec
 ## Design
 
 ```mermaid
-classDiagram
-    class language {
-        INTEGER id
-        TEXT title
-        INTEGER head_case_id
-        INTEGER head_no_id
+erDiagram
+    language {
+        integer id PK
+        text title UK
+        integer head_case_id FK "nullable"
+        integer head_no_id FK "nullable"
     }
-    class noun_case {
-        INTEGER id
-        INTEGER language_id
-        TEXT title
-        INTEGER ordinal
-        INTEGER is_optional
+    noun_case {
+        integer id PK
+        integer language_id FK
+        text title
+        integer ordinal
+        integer is_optional
     }
-    class noun_no {
-        INTEGER id
-        INTEGER language_id
-        TEXT title
-        INTEGER ordinal
+    noun_no {
+        integer id PK
+        integer language_id FK
+        text title
+        integer ordinal
     }
-    class noun_gender {
-        INTEGER id
-        INTEGER language_id
-        TEXT title
+    noun_gender {
+        integer id PK
+        integer language_id FK
+        text title
     }
-    class noun_declension {
-        INTEGER id
-        INTEGER language_id
-        TEXT title
-        INTEGER ordinal
+    noun_declension {
+        integer id PK
+        integer language_id FK
+        text title
+        integer ordinal
     }
-    class noun {
-        INTEGER id
-        INTEGER language_id
-        TEXT gloss
-        INTEGER gender_id
-        INTEGER declension_id
+    noun {
+        integer id PK
+        integer language_id FK
+        text gloss "nullable"
+        integer gender_id FK
+        integer declension_id FK
     }
-    class inflection {
-        INTEGER id
-        INTEGER noun_id
-        INTEGER case_id
-        INTEGER no_id
-        TEXT spelling
+    inflection {
+        integer id PK
+        integer noun_id FK
+        integer case_id FK
+        integer no_id FK
+        text spelling
     }
-    class revision {
-        INTEGER id
-        INTEGER inflection_id
-        INTEGER interval_days
-        REAL ease_factor
-        INTEGER repetitions
-        TEXT due_date
+    revision {
+        integer id PK
+        integer inflection_id FK "unique, 1:1"
+        integer interval_days
+        real ease_factor
+        integer repetitions
+        text due_date "nullable"
     }
 
-    language "1" *-- "0..N" noun_case : defines
-    language "1" *-- "0..N" noun_no : defines
-    language "1" *-- "0..N" noun_gender : defines
-    language "1" *-- "0..N" noun_declension : defines
-    language "1" *-- "0..N" noun : contains
-    noun "1" *-- "0..N" inflection : has
-    inflection "1" *-- "0..1" revision : scheduled by
-    noun "0..N" --> "1" noun_gender : gender
-    noun "0..N" --> "1" noun_declension : declension
-    inflection "0..N" --> "1" noun_case : case
-    inflection "0..N" --> "1" noun_no : number
-    language "0..1" --> "0..1" noun_case : headword case
-    language "0..1" --> "0..1" noun_no : headword number
+    language ||--o{ noun_case : "defines"
+    language ||--o{ noun_no : "defines"
+    language ||--o{ noun_gender : "defines"
+    language ||--o{ noun_declension : "defines"
+    language ||--o{ noun : "contains"
+    language |o--o| noun_case : "headword case"
+    language |o--o| noun_no : "headword number"
+    noun }o--|| noun_gender : "has"
+    noun }o--|| noun_declension : "has"
+    noun ||--o{ inflection : "has"
+    noun_case ||--o{ inflection : "realised in"
+    noun_no ||--o{ inflection : "realised in"
+    inflection ||--o| revision : "scheduled by"
 ```
-
