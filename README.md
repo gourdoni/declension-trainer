@@ -42,11 +42,11 @@ There are certain key categories in highly-inflected (Indo-European) languages t
 The common cases are:
 
 - **Nominative**: the subject
-- **Genitive** — possession, "of"
-- **Dative** — the indirect object, "to" or "for"
-- **Accusative** — the direct object
-- **Ablative** — means, manner, or separation; "by", "with", "from"
-- **Vocative** — direct address
+- **Genitive**: possession, "of"
+- **Dative**: the indirect object, "to" or "for"
+- **Accusative**: the direct object
+- **Ablative**: means, manner, or separation; "by", "with", "from"
+- **Vocative**: direct address
 
 A noun's gender and its **declension** dictate the suffixes it takes for each combination of case and number.
 For example, _rex_ is a masculine, 3rd declension noun, which is inflected as follows:
